@@ -1,0 +1,26 @@
+# Environment for the Rainfall Trajectory Lab.
+#
+# openswmm.engine is deliberately absent. The lab needs it built from source
+# with 2D surface routing enabled, which the published wheel does not include
+# by default. See the README for the build command, and install it into this
+# environment afterwards.
+#
+# Versions below are the ones the notebook was executed and verified against.
+name: openswmm2d
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.12
+  - numpy=2.5
+  - scipy=1.18
+  - pandas=3.0
+  - matplotlib=3.11
+  - rasterio=1.5      # DEM read and reprojection
+  - pyproj=3.7        # coordinate transforms
+  - pillow=12.3       # writes the animation GIF
+  - pyarrow           # parquet cache for ensemble metrics
+  - jupyterlab
+  - ipykernel
+  - nbconvert         # to execute the notebook headlessly
