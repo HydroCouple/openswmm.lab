@@ -17,8 +17,25 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
+# The Bellinge dataset is third-party published data and is not distributed
+# with this notebook. We search a small list of candidate locations in order
+# so the notebook works both for someone who has cloned the repo and placed
+# the data under <project>/data/Bellinge, and for a local layout where the
+# dataset sits in a sibling folder (e.g. ../SWMM_inp/Bellinge or ../Bellinge).
+# The BELLINGE_DATA_DIR env var always wins; set it to override everything.
+
 _env_dir = os.environ.get("BELLINGE_DATA_DIR")
-BELLINGE_DIR = Path(_env_dir) if _env_dir else PROJECT_DIR / "data" / "Bellinge"
+_candidate_dirs = [
+    Path(_env_dir) if _env_dir else None,               # explicit env override
+    PROJECT_DIR / "data" / "Bellinge",                   # canonical location for others
+    PROJECT_DIR.parent / "Bellinge",                      # sibling: <parent>/Bellinge
+    PROJECT_DIR.parent / "SWMM_inp" / "Bellinge",         # sibling: <parent>/SWMM_inp/Bellinge
+]
+_expected_marker = Path("7_SWMM") / "BellingeSWMM_v021_nopervious.inp"
+BELLINGE_DIR = next(
+    (d for d in _candidate_dirs if d and (d / _expected_marker).exists()),
+    PROJECT_DIR / "data" / "Bellinge",  # final fallback so require_data() gives a useful message
+)
 
 RADAR_DIR = BELLINGE_DIR / "Local_X-band"
 INP_PATH = BELLINGE_DIR / "7_SWMM" / "BellingeSWMM_v021_nopervious.inp"
@@ -43,12 +60,16 @@ def require_data() -> None:
     """
     missing = [p for p in (INP_PATH, RADAR_DIR, SUPPLIED_DEM_PATH) if not p.exists()]
     if missing:
+        searched = [str(d) for d in _candidate_dirs if d]
         raise FileNotFoundError(
             "Bellinge dataset not found. Expected these paths to exist:\n  "
             + "\n  ".join(str(p) for p in missing)
             + f"\n\nCurrently looking under: {BELLINGE_DIR}\n"
-            "Set the BELLINGE_DATA_DIR environment variable to your copy of the\n"
-            "dataset, or place it at <project>/data/Bellinge. The README explains\n"
+            "Searched the following locations:\n  "
+            + "\n  ".join(searched)
+            + "\n\nSet the BELLINGE_DATA_DIR environment variable to your copy of the\n"
+            "dataset, or place it at <project>/data/Bellinge or in a sibling folder\n"
+            "(<parent>/Bellinge or <parent>/SWMM_inp/Bellinge). The README explains\n"
             "where to download it."
         )
 
